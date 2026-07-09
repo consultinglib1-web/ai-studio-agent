@@ -22,12 +22,19 @@ st.markdown("---")
 st.subheader("🛠️ GSBC Global Executive PMO Portal")
 st.write("Inter-subsidiary integration, financial models, and spatial data audits.")
 
-# 3. SELECT INSTITUTION
+# 3. SELECT INSTITUTION (All original profiles restored)
 institution = st.sidebar.selectbox(
     "Select Your Institution Group:",
-    ["Select Profile", "GSBC Global Executive PMO", "Government of Liberia Representative"]
+    [
+        "Select Profile", 
+        "GSBC Global Executive PMO", 
+        "Government of Liberia Representative",
+        "US Government / USTDA",
+        "Development Finance Institutions (DFIs)"
+    ]
 )
 
+# 4. WORKSPACE ROUTING LOGIC
 if institution == "GSBC Global Executive PMO":
     st.markdown("### 🧠 Query the Project Intelligence Agent")
     
@@ -49,11 +56,15 @@ if institution == "GSBC Global Executive PMO":
                     if response and response.text:
                         st.markdown(response.text)
                     else:
-                        st.warning("⚠️ The model returned an empty response. Please check your inputs.")
+                        st.warning("⚠️ The model returned an empty response.")
                         
                 except Exception as e:
                     st.error(f"Error accessing intelligence model: {e}")
         else:
             st.warning("Please enter a prompt before running the engine.")
+            
+elif institution != "Select Profile":
+    # Fallback message for other institutional views
+    st.info(f"Welcome to the {institution} portal. Select 'GSBC Global Executive PMO' to open the query console.")
 else:
-    st.info("Please select 'GSBC Global Executive PMO' from the sidebar to open the query console.")
+    st.info("Please select an institutional group from the sidebar to activate the workspace.")
