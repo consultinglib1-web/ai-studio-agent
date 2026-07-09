@@ -1,5 +1,10 @@
 import streamlit as st
 import google.generativeai as genai
+from pypdf import PdfReader
+from docx import Document
+import pandas as pd
+from PIL import Image
+import io
 
 # 1. SYSTEM SECURITY & API INITIALIZATION
 try:
@@ -16,26 +21,19 @@ st.set_page_config(
 
 # 3. ADVANCED CORPORATE & ECOSYSTEM PERSONA INJECTION
 EXECUTIVE_PERSONA = """
-You are the Lead Senior Infrastructure, Mining, & DFI Consultant for the $5.565 Billion Western Liberty Corridor Project in Liberia. 
-The Lead Developer is GSBC Global Holding LLC, based out of Tysons, Virginia.
-The project operates via four subsidiary Special Purpose Vehicles (SPVs) based in Monrovia, Liberia:
+You are the Lead Senior Infrastructure, Mining, & DFI Consultant and Lead Engineer for the $5.565 Billion Western Liberty Corridor Project in Liberia. 
+The Lead Developer is GSBC Global Holding LLC (Tysons, VA).
+The project operates via four subsidiary Special Purpose Vehicles (SPVs) in Monrovia, Liberia:
 1. American Liberian Mining Company (Critical minerals extraction & concessions)
 2. Western Corridor Liberty Railway (Heavy-haul multi-user logistics infrastructure)
 3. Western Corridor Liberty Highway (Inter-modal commercial corridor)
-4. Blue Mobility Bypass & GreenShield Eco-Park (The industrial hub acting as a cluster for advanced manufacturing)
+4. Blue Mobility Bypass & GreenShield Eco-Park (The industrial hub cluster: WTE, plastic pyrolysis, Midrex/Inductotherm Hydrogen DRI, cup rubber lines for DLA/Oshkosh, jet engines, ammonia, biochar).
 
-The GreenShield Eco-Park manufacturing cluster includes:
-- Waste-to-Energy (WTE) and supporting recycled plastic pyrolysis.
-- Midrex & Inductotherm Hydrogen-based Iron Ore Direct Reduced Iron (DRI) for green steel supply chains.
-- Cup rubber processing engineered to supply the US Defense Logistics Agency (DLA), Oshkosh, and major global automakers with industrial rubber parts and bushings for automotive and yellow engines.
-- Advanced production lines for jet engines, ammonia, and biochar sequestration.
-
-Your expertise spans concession agreements, multi-user infrastructure financing, and Western DFI alignment (US State Dept PGI, DFC, US EXIM, USTDA, and G7 counterparts). 
-
-CRITICAL OPERATION RULE: If the user uploads project documents, prioritize reviewing and cross-referencing their contents against this corporate structure to deliver highly specific, grounded institutional responses.
+Your expertise spans engineering specifications, concession agreements, spatial mapping layouts, and Western DFI alignment (US State Dept PGI, DFC, US EXIM, USTDA, G7 counterparts). 
+CRITICAL RULE: Thoroughly analyze all uploaded PDFs, Word docs, Excel sheets, and satellite/mapping images, cross-referencing them against this corporate structure to deliver rigorous engineering and strategic insights.
 """
 
-# 4. SECURE ACCESS PORTAL & DOCUMENT DROPZONE (SIDEBAR)
+# 4. SECURE ACCESS PORTAL & MULTI-FORMAT DOCUMENT DROPZONE (SIDEBAR)
 st.sidebar.image("https://img.icons8.com/fluency/96/shield.png", width=60)
 st.sidebar.title("Secure Access Portal")
 st.sidebar.caption("GSBC Global Holding LLC Ecosystem")
@@ -51,27 +49,57 @@ stakeholder_role = st.sidebar.selectbox(
     ]
 )
 
-# 📂 NEW SYSTEM FEATURE: INTERACTIVE DOCUMENT DROPZONE
 st.sidebar.markdown("---")
-st.sidebar.subheader("📂 Project Document Dropzone")
-st.sidebar.caption("Upload draft MOUs, Feasibility Studies, or Concession Briefs for immediate analysis.")
+st.sidebar.subheader("📂 Comprehensive Project Dropzone")
+st.sidebar.caption("Upload raw PDFs, Word Docs, Excel sheets, or Satellite Maps/Images.")
 
+# Expanded file uploader accepting raw binaries and images
 uploaded_files = st.sidebar.file_uploader(
-    "Select Project Files (TXT format supported)", 
-    type=["txt"], 
+    "Upload Project Attachments", 
+    type=["txt", "pdf", "docx", "xlsx", "xls", "csv", "png", "jpg", "jpeg"], 
     accept_multiple_files=True
 )
 
-# Extract and bundle document contexts if files are uploaded
+# Advanced Data Processing Matrix
 document_context = ""
+attached_images = []
+
 if uploaded_files:
-    st.sidebar.success(f"✅ {len(uploaded_files)} Document(s) Loaded Into Memory!")
+    st.sidebar.success(f"✅ {len(uploaded_files)} Resource(s) Loaded Into Memory!")
     for uploaded_file in uploaded_files:
+        file_ext = uploaded_file.name.split(".")[-1].lower()
+        
         try:
-            file_contents = uploaded_file.read().decode("utf-8")
-            document_context += f"\n\n--- DOCUMENT START: {uploaded_file.name} ---\n{file_contents}\n--- DOCUMENT END ---"
+            # Handle PDF
+            if file_ext == "pdf":
+                pdf_reader = PdfReader(uploaded_file)
+                text = "".join([page.extract_text() for page in pdf_reader.pages])
+                document_context += f"\n\n[PDF DOCUMENT: {uploaded_file.name}]\n{text}"
+            
+            # Handle MS Word
+            elif file_ext == "docx":
+                doc = Document(uploaded_file)
+                text = "".join([para.text + "\n" for para in doc.paragraphs])
+                document_context += f"\n\n[WORD DOCUMENT: {uploaded_file.name}]\n{text}"
+            
+            # Handle Excel/CSV Data Models
+            elif file_ext in ["xlsx", "xls", "csv"]:
+                df = pd.read_csv(uploaded_file) if file_ext == "csv" else pd.read_excel(uploaded_file)
+                document_context += f"\n\n[DATA MODEL: {uploaded_file.name}]\n{df.to_string()}"
+            
+            # Handle Satellite / Map Images
+            elif file_ext in ["png", "jpg", "jpeg"]:
+                img = Image.open(uploaded_file)
+                attached_images.append(img)
+                st.sidebar.image(img, caption=f"🖼️ Attached: {uploaded_file.name}", use_container_width=True)
+                
+            # Handle TXT
+            else:
+                text = uploaded_file.read().decode("utf-8")
+                document_context += f"\n\n[DOCUMENT: {uploaded_file.name}]\n{text}"
+                
         except Exception as e:
-            st.sidebar.error(f"Error reading {uploaded_file.name}: {e}")
+            st.sidebar.error(f"Error parsing {uploaded_file.name}: {e}")
 
 # --- PORTAL ROUTING LOGIC ---
 if stakeholder_role == "Select Portal...":
@@ -91,35 +119,35 @@ else:
     st.markdown(f"**Lead Developer:** GSBC Global Holding LLC (Tysons, VA) | **Project:** Western Liberty Corridor ($5.565B)")
     st.markdown("---")
     
-    # Dynamically inject suggested prompts based on role
+    # Context-specific suggestions
     if "Government" in stakeholder_role:
-        st.success("🇸🇱 Focus: Sovereign Concessions, Inter-Modal Transport SPV alignment, and local employment.")
+        st.success("🇸🇱 Focus: Sovereign Concessions, Multi-User Rail Access, and National Spatial Layouts.")
         suggested_queries = [
-            "How should the Liberian Government structure the concession agreement for the Western Corridor Liberty Railway to ensure multi-user access while protecting GSBC's primary CapEx?",
-            "What sovereign incentives can Liberia provide to accelerate the Hydrogen DRI and cup rubber processing units within the GreenShield Eco-Park?"
+            "Review our uploaded draft concession agreement Word document and check for sovereign liability alignment.",
+            "Analyze the attached satellite map of the highway route for environmental compliance near community hubs."
         ]
     elif "US DFIs" in stakeholder_role:
-        st.warning("🇺🇸 Focus: Critical Mineral Supply Chains, DLA Off-take Security, and USTDA Engineering Grants.")
+        st.warning("🇺🇸 Focus: Critical Mineral Supply Chains, Financial Model Audit, and Defense Logistics Allocation.")
         suggested_queries = [
-            "How can we leverage the cup rubber processing supply line to the US Defense Logistics Agency (DLA) and Oshkosh to secure DFC political risk insurance and EXIM off-take financing?",
-            "Detail how the Midrex/Inductotherm Hydrogen DRI setup aligns with the US State Department's PGI green infrastructure targets."
+            "Audit the attached Excel CapEx model to evaluate the debt serviceability of the heavy-haul railway.",
+            "Review the attached industrial schematic to verify if the rubber parts processing cluster satisfies DLA compliance."
         ]
     elif "G7 DFIs" in stakeholder_role:
-        st.info("🇪🇺 🇯🇵 🇨🇦 Focus: Joint-ventures, Pyrolysis/WTE Carbon Credits, and Advanced Tech Procurement.")
+        st.info("🇪🇺 🇯🇵 🇨🇦 Focus: Co-financing Frameworks, ESG Sat-Imagery Auditing, and Tech Procurement.")
         suggested_queries = [
-            "Outline a co-financing strategy between JBIC (Japan) and European DFIs for the advanced jet engine and ammonia production facilities within the Eco-Park.",
-            "What carbon crediting frameworks apply to the WTE, recycled plastic pyrolysis, and biochar operations under international ESG standards?"
+            "Analyze the attached environmental impact PDF against G7 Equator Principles.",
+            "Review the satellite imaging of the proposed GreenShield Eco-Park site to determine zoning viability for the Hydrogen DRI plant."
         ]
     else:
-        st.error("🛠️ GSBC Global Executive PMO Portal: Inter-subsidiary cash-flow optimization and master schedules.")
+        st.error("🛠️ GSBC Global Executive PMO Portal: Inter-subsidiary integration, financial models, and spatial data audits.")
         suggested_queries = [
-            "Draft an executive master corporate strategy aligning the American Liberian Mining Company's output directly with the GreenShield Eco-Park's DRI facilities.",
-            "Analyze our uploaded draft agreements to identify liabilities or misalignments between the Railway and Highway SPVs."
+            "Synthesize the uploaded Excel budget sheet with the draft mining concession PDF to identify cash-flow bottlenecks.",
+            "Review the attached layout image and map out an infrastructure staging timeline for the railway engineering team."
         ]
 
     # 5. CONTEXTUAL INTELLIGENCE INTERFACE
     st.write("### 🧠 Query the Project Intelligence Agent")
-    user_query = st.chat_input("Enter your strategic or corporate query here...")
+    user_query = st.chat_input("Enter your engineering or strategic query here...")
     
     st.caption("**Suggested Strategic Prompts:**")
     for prompt in suggested_queries:
@@ -131,14 +159,22 @@ else:
             st.write(user_query)
             
         with st.chat_message("assistant"):
-            with st.spinner("Analyzing SPV corporate matrices, uploaded documents, and DFI frameworks..."):
+            with st.spinner("Processing complex binaries, tracking maps, and calculating matrices..."):
                 try:
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    # Leverage multimodal model for image handling if map images are present
+                    model_name = 'gemini-1.5-flash'
+                    model = genai.GenerativeModel(model_name)
                     
-                    # Synthesize System Persona, Corporate Structure, Uploaded Files, and the User's Active Query
-                    full_prompt = f"{EXECUTIVE_PERSONA}\n\nStakeholder Context: {stakeholder_role}\n\nUploaded Project Documents Context: {document_context}\n\nQuery: {user_query}"
+                    # Package content payloads
+                    content_payload = [
+                        f"{EXECUTIVE_PERSONA}\n\nStakeholder Context: {stakeholder_role}\n\nExtracted Text Documents & Spreadsheets Context: {document_context}\n\nQuery: {user_query}"
+                    ]
                     
-                    response = model.generate_content(full_prompt)
+                    # Append binary image data dynamically for Gemini Vision
+                    for img in attached_images:
+                        content_payload.append(img)
+                    
+                    response = model.generate_content(content_payload)
                     st.markdown(response.text)
                 except Exception as e:
-                    st.error(f"Error accessing intelligence model: {e}")
+                    st.error(f"Error accessing visual intelligence engine: {e}")
