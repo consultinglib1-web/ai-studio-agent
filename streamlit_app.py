@@ -30,10 +30,12 @@ The GreenShield Eco-Park manufacturing cluster includes:
 - Cup rubber processing engineered to supply the US Defense Logistics Agency (DLA), Oshkosh, and major global automakers with industrial rubber parts and bushings for automotive and yellow engines.
 - Advanced production lines for jet engines, ammonia, and biochar sequestration.
 
-Your expertise spans concession agreements, multi-user infrastructure financing, and Western DFI alignment (US State Dept PGI, DFC, US EXIM, USTDA, and G7 counterparts). Leverage this specific corporate structure in all strategic guidance.
+Your expertise spans concession agreements, multi-user infrastructure financing, and Western DFI alignment (US State Dept PGI, DFC, US EXIM, USTDA, and G7 counterparts). 
+
+CRITICAL OPERATION RULE: If the user uploads project documents, prioritize reviewing and cross-referencing their contents against this corporate structure to deliver highly specific, grounded institutional responses.
 """
 
-# 4. SECURE ACCESS PORTAL
+# 4. SECURE ACCESS PORTAL & DOCUMENT DROPZONE (SIDEBAR)
 st.sidebar.image("https://img.icons8.com/fluency/96/shield.png", width=60)
 st.sidebar.title("Secure Access Portal")
 st.sidebar.caption("GSBC Global Holding LLC Ecosystem")
@@ -49,6 +51,28 @@ stakeholder_role = st.sidebar.selectbox(
     ]
 )
 
+# 📂 NEW SYSTEM FEATURE: INTERACTIVE DOCUMENT DROPZONE
+st.sidebar.markdown("---")
+st.sidebar.subheader("📂 Project Document Dropzone")
+st.sidebar.caption("Upload draft MOUs, Feasibility Studies, or Concession Briefs for immediate analysis.")
+
+uploaded_files = st.sidebar.file_uploader(
+    "Select Project Files (TXT format supported)", 
+    type=["txt"], 
+    accept_multiple_files=True
+)
+
+# Extract and bundle document contexts if files are uploaded
+document_context = ""
+if uploaded_files:
+    st.sidebar.success(f"✅ {len(uploaded_files)} Document(s) Loaded Into Memory!")
+    for uploaded_file in uploaded_files:
+        try:
+            file_contents = uploaded_file.read().decode("utf-8")
+            document_context += f"\n\n--- DOCUMENT START: {uploaded_file.name} ---\n{file_contents}\n--- DOCUMENT END ---"
+        except Exception as e:
+            st.sidebar.error(f"Error reading {uploaded_file.name}: {e}")
+
 # --- PORTAL ROUTING LOGIC ---
 if stakeholder_role == "Select Portal...":
     st.title("🛤️ Western Liberty Corridor Project Portal")
@@ -56,7 +80,6 @@ if stakeholder_role == "Select Portal...":
     st.markdown("---")
     st.info("🔒 Please select your institutional group in the sidebar to authenticate and unlock corporate SPV dashboards.")
     
-    # High-level metrics showing the massive scope of GSBC's structure
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Lead Developer", "GSBC Global Holding")
     col2.metric("Total Est. CapEx", "$5.565 Billion")
@@ -68,9 +91,9 @@ else:
     st.markdown(f"**Lead Developer:** GSBC Global Holding LLC (Tysons, VA) | **Project:** Western Liberty Corridor ($5.565B)")
     st.markdown("---")
     
-    # Context-specific advice based on your 4 SPVs and industrial clusters
+    # Dynamically inject suggested prompts based on role
     if "Government" in stakeholder_role:
-        st.success("🇸🇱 Focus: Sovereign Concessions, Inter-Modal Transport SPV alignment, and local employment via GreenShield Eco-Park.")
+        st.success("🇸🇱 Focus: Sovereign Concessions, Inter-Modal Transport SPV alignment, and local employment.")
         suggested_queries = [
             "How should the Liberian Government structure the concession agreement for the Western Corridor Liberty Railway to ensure multi-user access while protecting GSBC's primary CapEx?",
             "What sovereign incentives can Liberia provide to accelerate the Hydrogen DRI and cup rubber processing units within the GreenShield Eco-Park?"
@@ -91,7 +114,7 @@ else:
         st.error("🛠️ GSBC Global Executive PMO Portal: Inter-subsidiary cash-flow optimization and master schedules.")
         suggested_queries = [
             "Draft an executive master corporate strategy aligning the American Liberian Mining Company's output directly with the GreenShield Eco-Park's DRI facilities.",
-            "How do we insulate the cash flows of the Western Corridor Liberty Railway SPV from the Highway SPV to maximize standalone project finance bankability?"
+            "Analyze our uploaded draft agreements to identify liabilities or misalignments between the Railway and Highway SPVs."
         ]
 
     # 5. CONTEXTUAL INTELLIGENCE INTERFACE
@@ -108,10 +131,12 @@ else:
             st.write(user_query)
             
         with st.chat_message("assistant"):
-            with st.spinner("Analyzing SPV corporate matrices and DFI frameworks..."):
+            with st.spinner("Analyzing SPV corporate matrices, uploaded documents, and DFI frameworks..."):
                 try:
                     model = genai.GenerativeModel('gemini-1.5-flash')
-                    full_prompt = f"{EXECUTIVE_PERSONA}\n\nStakeholder Context: {stakeholder_role}\n\nQuery: {user_query}"
+                    
+                    # Synthesize System Persona, Corporate Structure, Uploaded Files, and the User's Active Query
+                    full_prompt = f"{EXECUTIVE_PERSONA}\n\nStakeholder Context: {stakeholder_role}\n\nUploaded Project Documents Context: {document_context}\n\nQuery: {user_query}"
                     
                     response = model.generate_content(full_prompt)
                     st.markdown(response.text)
