@@ -162,7 +162,7 @@ else:
             with st.spinner("Processing complex binaries, tracking maps, and calculating matrices..."):
                 try:
                     # Leverage multimodal model for image handling if map images are present
-                    model_name = 'gemini-1.5-flash'
+                    model_name = 'gemini-2.5-flash'
                     model = genai.GenerativeModel(model_name)
                     
                     # Package content payloads
